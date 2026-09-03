@@ -359,7 +359,7 @@
             </tr>
           </thead>
           <tbody id="table-body">
-            <tr><td colspan="12" class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data dari Spreadsheet...</td></tr>
+            <tr><td colspan="8" class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data dari Spreadsheet...</td></tr>
           </tbody>
         </table>
       </div>
@@ -452,7 +452,7 @@
 
     async function fetchData() {
       const tbody = document.getElementById('table-body');
-      tbody.innerHTML = `<tr><td colspan="12" class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Menyinkronkan data...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Menyinkronkan data...</td></tr>`;
       
       try {
         let response = await fetch(SHEET_URL + '&t=' + new Date().getTime());
@@ -485,7 +485,7 @@
         handleSearchAndSort();
       } catch (error) {
         console.error(error);
-        tbody.innerHTML = `<tr><td colspan="12" class="loading-state" style="color: #ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> Gagal memuat data. Pastikan spreadsheet publik / dapat diakses.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="loading-state" style="color: #ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> Gagal memuat data. Pastikan spreadsheet publik / dapat diakses.</td></tr>`;
       }
     }
 
@@ -549,7 +549,7 @@
       const paginatedItems = filteredData.slice(start, end);
 
       if (paginatedItems.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="12" class="loading-state">Tidak ada data yang ditemukan.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="loading-state">Tidak ada data yang ditemukan.</td></tr>`;
         document.getElementById('pagination-info').innerText = `0 dari ${filteredData.length} data`;
         renderPaginationControls();
         return;
@@ -569,10 +569,6 @@
             <td><b>${item.target}</b></td>
             <td><a href="https://wa.me/${item.nomor}" target="_blank" class="phone-link"><i class="fa-brands fa-whatsapp"></i> ${item.nomor}</a></td>
             <td><b>${formatRupiah(item.nominalVal)}</b></td>
-            <td>${item.email}</td>
-            <td title="${item.alamat}">${item.alamat.length > 25 ? item.alamat.substring(0, 25) + '...' : item.alamat}</td>
-            <td>${item.nik}</td>
-            <td>${item.provinsi}</td>
             <td>
               <button class="btn-detail" onclick="openDetailModal(${item.rowIndex})">
                 <i class="fa-solid fa-eye"></i> Detail
