@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Monitoring Penagihan - Fast Delete</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: #000000; color: #f1f5f9; }
+    
+    .navbar {
+      background-color: #000000;
+      color: #fff;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid #222222;
+    }
+    .navbar h1 { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    
+    .status-container { display: flex; align-items: center; gap: 10px; }
+    .badge-data { background-color: transparent; color: #94a3b8; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid #333333; }
+    
+    .btn-refresh {
+      background: transparent;
+      color: #cbd5e1;
+      border: 1px solid #475569;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-refresh:hover { background: #1e293b; color: white; }
+
+    .container { padding: 16px; max-width: 1600px; margin: 0 auto; }
+    
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: #000000;
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #262626;
+    }
+    .card-info p { font-size: 11px; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+    .card-info h2 { font-size: 18px; font-weight: 700; color: #ffffff; }
+    .card-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #cbd5e1; font-size: 16px; background: transparent; border: 1px solid #333333; }
+    
+    .table-container { background: #000000; border-radius: 10px; padding: 16px; border: 1px solid #262626; }
+    
+    .table-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-bottom: 16px; 
+      flex-wrap: wrap; 
+      gap: 12px; 
+    }
+    .table-title { 
+      font-size: 18px; 
+      font-weight: 700; 
+      color: #ffffff; 
+      display: flex; 
+      align-items: center; 
+      gap: 10px; 
+    }
+    .table-title i { color: #94a3b8; font-size: 20px; }
+
+    .table-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    
+    .search-input { 
+      padding: 8px 14px; 
+      border: 1px solid #333333; 
+      background: #000000;
+      color: #fff;
+      border-radius: 8px; 
+      font-size: 13px; 
+      outline: none; 
+      min-width: 180px;
+    }
+    .search-input:focus { border-color: #64748b; }
+
+    .select-input { 
+      padding: 8px 12px; 
+      border: 1px solid #333333; 
+      border-radius: 8px; 
+      font-size: 13px; 
+      outline: none; 
+      background: #000000; 
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .btn-danger {
+      background-color: transparent;
+      color: #ef4444;
+      border: 1px solid #ef4444;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-danger:hover { background-color: #ef4444; color: white; }
+    .btn-danger:disabled { border-color: #333333; color: #555555; cursor: not-allowed; background: transparent; }
+
+    .row-checkbox, #select-all {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: #ef4444;
+    }
+    
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 12px; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+    
+    th { 
+      background-color: transparent; 
+      color: #94a3b8; 
+      font-weight: 700; 
+      padding: 12px 10px; 
+      border-bottom: 1px solid #262626; 
+      text-transform: uppercase; 
+      font-size: 11px; 
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    td { padding: 12px 10px; border-bottom: 1px solid #1a1a1a; vertical-align: middle; color: #cbd5e1; white-space: nowrap; }
+    
+    .phone-link { color: #38bdf8; text-decoration: none; font-weight: 600; }
+    .phone-link:hover { text-decoration: underline; }
+    
+    .btn-detail {
+      background-color: transparent;
+      color: #e2e8f0;
+      border: 1px solid #475569;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-detail:hover { background-color: #1e293b; }
+    
+    .pagination-container { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 12px; color: #94a3b8; flex-wrap: wrap; gap: 8px; }
+    .btn-page { padding: 8px 16px; border: 1px solid #333333; background: transparent; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; color: #cbd5e1; }
+    .btn-page:hover:not(:disabled) { background: #1e293b; }
+    .btn-page:disabled { opacity: 0.3; cursor: not-allowed; }
+    
+    .loading-state { text-align: center; padding: 40px; color: #94a3b8; font-size: 14px; }
+
+    /* Modal Pop-up Detail */
+    .modal {
+      display: none; 
+      position: fixed; 
+      z-index: 1000; 
+      left: 0;
+      top: 0;
+      width: 100%; 
+      height: 100%; 
+      background-color: rgba(0, 0, 0, 0.85); 
+      backdrop-filter: blur(4px);
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+    
+    .modal-content-detail {
+      background-color: #000000;
+      border: 1px solid #262626;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      position: relative;
+    }
+
+    .modal-header-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #262626;
+      padding-bottom: 10px;
+    }
+
+    .detail-group {
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+    .detail-group label {
+      font-weight: 700;
+      color: #94a3b8;
+      display: block;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+    .detail-group div {
+      color: #f1f5f9;
+      word-break: break-word;
+    }
+
+    .photo-grid-modal {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .photo-box { text-align: center; }
+    .photo-box label { font-size: 11px; font-weight: 700; color: #94a3b8; margin-bottom: 4px; display: block; }
+    .modal-thumb { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; border: 1px solid #333333; cursor: pointer; }
+    .modal-thumb:hover { opacity: 0.8; }
+
+    .modal-image-box {
+      background: transparent;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-image-box img { max-width: 95vw; max-height: 85vh; object-fit: contain; border-radius: 8px; }
+
+    .close-btn {
+      background: transparent;
+      color: #94a3b8;
+      border: 1px solid #475569;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .close-btn:hover { background: #ef4444; color: white; border-color: #ef4444; }
+
+    @media (max-width: 600px) {
+      .container { padding: 10px; }
+      .metrics-grid { grid-template-columns: 1fr; }
+      .table-container { padding: 12px; }
+      .search-input { min-width: 100%; }
+      .table-controls { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <h1><i class="fa-solid fa-chart-line"></i> Monitoring Penagihan</h1>
+    <div class="status-container">
+      <button class="btn-refresh" onclick="fetchData()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+      <span class="badge-data" id="total-data-badge">0 Data</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="metrics-grid">
+      <div class="card">
+        <div class="card-info">
+          <p>Total Nominal</p>
+          <h2 id="total-nominal">Rp 0</h2>
+        </div>
+        <div class="card-icon"><i class="fa-solid fa-wallet"></i></div>
+      </div>
+      <div class="card">
+        <div class="card-info">
+          <p>Total Nasabah / Target</p>
+          <h2 id="total-nasabah">0</h2>
+        </div>
+        <div class="card-icon"><i class="fa-solid fa-users"></i></div>
+      </div>
+      <div class="card">
+        <div class="card-info">
+          <p>Total Agent</p>
+          <h2 id="total-agent">0</h2>
+        </div>
+        <div class="card-icon"><i class="fa-solid fa-user-tie"></i></div>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <div class="table-header">
+        <div class="table-title">
+          <i class="fa-solid fa-database"></i> Data Penagihan Nasabah
+        </div>
+        <div class="table-controls">
+          <input type="text" class="search-input" id="search-box" placeholder="Cari Target / Case..." oninput="handleSearchAndSort()">
+          
+          <!-- Dropdown Filter Agent -->
+          <select class="select-input" id="agent-filter" onchange="handleSearchAndSort()">
+            <option value="">Semua Agent</option>
+          </select>
+
+          <select class="select-input" id="sort-select" onchange="handleSearchAndSort()">
+            <option value="default">Sortir: Default</option>
+            <option value="name-asc">Target (A-Z)</option>
+            <option value="name-desc">Target (Z-A)</option>
+            <option value="amount-desc">Nominal (Terbesar)</option>
+            <option value="amount-asc">Nominal (Terkecil)</option>
+          </select>
+
+          <select class="select-input" id="rows-per-page" onchange="changeRowsPerPage()">
+            <option value="25">25 Baris</option>
+            <option value="50" selected>50 Baris</option>
+            <option value="100">100 Baris</option>
+          </select>
+
+          <button class="btn-danger" id="btn-delete-selected" onclick="deleteSelectedRows()" disabled>
+            <i class="fa-solid fa-trash"></i> Hapus Terpilih (<span id="selected-count">0</span>)
+          </button>
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align: center; width: 40px;">
+                <input type="checkbox" id="select-all" onclick="toggleSelectAll(this)">
+              </th>
+              <th>NO</th>
+              <th>AGENT</th>
+              <th>CASE NO</th>
+              <th>TARGET</th>
+              <th>NOMOR HP</th>
+              <th>NOMINAL</th>
+              <th>AKSI DETAIL</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <tr><td colspan="12" class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data dari Spreadsheet...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination-container">
+        <div id="pagination-info">0 data</div>
+        <div>
+          <button class="btn-page" id="btn-prev" onclick="prevPage()">&lt; Prev</button>
+          <button class="btn-page" id="btn-next" onclick="nextPage()">Next &gt;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Detail -->
+  <div id="detailModal" class="modal" onclick="closeDetailModal()">
+    <div class="modal-content-detail" onclick="event.stopPropagation()">
+      <div class="modal-header-title">
+        <span><i class="fa-solid fa-circle-info"></i> Detail Lengkap Nasabah</span>
+        <button class="close-btn" onclick="closeDetailModal()">&times;</button>
+      </div>
+      <div id="detailContentBody"></div>
+    </div>
+  </div>
+
+  <!-- Modal Preview Foto -->
+  <div id="imageModal" class="modal" onclick="closeImageModal()">
+    <div class="modal-image-box" onclick="event.stopPropagation()">
+      <img id="modalImage" src="" alt="Preview Foto">
+    </div>
+  </div>
+
+  <script>
+    const SHEET_ID = '1WGy5jsb19magcmLToHMI0klxluvu6fEEaw15OHOVKYY';
+    const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+
+    let rawData = [];
+    let filteredData = [];
+    let selectedTargets = new Set();
+    let currentPage = 1;
+    let pageSize = 50;
+
+    function formatRupiah(number) {
+      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(number);
+    }
+
+    function parseNumber(value) {
+      if (!value) return 0;
+      let str = value.toString().trim().replace(/[^0-9.,-]/g, '');
+      if (!str) return 0;
+      str = str.replace(/\./g, '').replace(',', '.');
+      let num = parseFloat(str);
+      return isNaN(num) ? 0 : num;
+    }
+
+    function parseCSV(text) {
+      let lines = text.split("\n");
+      let result = [];
+      let headers = [];
+      
+      for (let i = 0; i < lines.length; i++) {
+        let currentLine = lines[i].trim();
+        if (!currentLine) continue;
+        
+        let row = [];
+        let inQuotes = false;
+        let entry = '';
+        
+        for (let j = 0; j < currentLine.length; j++) {
+          let char = currentLine[j];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            row.push(entry.trim());
+            entry = '';
+          } else {
+            entry += char;
+          }
+        }
+        row.push(entry.trim());
+        
+        if (i === 0) {
+          headers = row.map(h => h.toLowerCase());
+        } else {
+          result.push(row);
+        }
+      }
+      return { headers, rows: result };
+    }
+
+    async function fetchData() {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = `<tr><td colspan="12" class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Menyinkronkan data...</td></tr>`;
+      
+      try {
+        let response = await fetch(SHEET_URL + '&t=' + new Date().getTime());
+        let dataText = await response.text();
+        let parsed = parseCSV(dataText);
+        
+        rawData = parsed.rows.map((r, index) => ({
+          rowIndex: index + 2,
+          agent: r[0] || '',
+          caseNo: r[1] || '',
+          target: r[2] || '',
+          nomor: r[3] || '',
+          nominalRaw: r[4] || '',
+          nominalVal: parseNumber(r[4]),
+          email: r[5] || '',
+          alamat: r[6] || '',
+          namaEc1: r[7] || '',
+          nomorEc1: r[8] || '',
+          namaEc2: r[9] || '',
+          nomorEc2: r[10] || '',
+          nik: r[11] || '',
+          provinsi: r[12] || '',
+          livePhoto: r[13] || '',
+          idCardPhoto: r[14] || ''
+        }));
+
+        filteredData = [...rawData];
+        updateMetrics();
+        populateAgentDropdown();
+        handleSearchAndSort();
+      } catch (error) {
+        console.error(error);
+        tbody.innerHTML = `<tr><td colspan="12" class="loading-state" style="color: #ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> Gagal memuat data. Pastikan spreadsheet publik / dapat diakses.</td></tr>`;
+      }
+    }
+
+    function populateAgentDropdown() {
+      const agentSelect = document.getElementById('agent-filter');
+      const uniqueAgents = [...new Set(rawData.map(d => d.agent))].filter(Boolean).sort();
+      
+      let html = '<option value="">Semua Agent</option>';
+      uniqueAgents.forEach(agent => {
+        html += `<option value="${agent}">${agent}</option>`;
+      });
+      agentSelect.innerHTML = html;
+    }
+
+    function updateMetrics() {
+      let totalNominal = rawData.reduce((acc, curr) => acc + curr.nominalVal, 0);
+      let totalNasabah = rawData.length;
+      let uniqueAgents = new Set(rawData.map(d => d.agent)).size;
+
+      document.getElementById('total-nominal').innerText = formatRupiah(totalNominal);
+      document.getElementById('total-nasabah').innerText = totalNasabah.toLocaleString('id-ID');
+      document.getElementById('total-agent').innerText = uniqueAgents.toLocaleString('id-ID');
+      document.getElementById('total-data-badge').innerText = `${totalNasabah} Data`;
+    }
+
+    function handleSearchAndSort() {
+      const query = document.getElementById('search-box').value.toLowerCase();
+      const selectedAgent = document.getElementById('agent-filter').value;
+      const sortVal = document.getElementById('sort-select').value;
+
+      filteredData = rawData.filter(item => {
+        const matchesQuery = item.target.toLowerCase().includes(query) ||
+               item.agent.toLowerCase().includes(query) ||
+               item.caseNo.toLowerCase().includes(query) ||
+               item.nomor.toLowerCase().includes(query) ||
+               item.provinsi.toLowerCase().includes(query);
+               
+        const matchesAgent = !selectedAgent || item.agent === selectedAgent;
+
+        return matchesQuery && matchesAgent;
+      });
+
+      if (sortVal === 'name-asc') {
+        filteredData.sort((a, b) => a.target.localeCompare(b.target));
+      } else if (sortVal === 'name-desc') {
+        filteredData.sort((a, b) => b.target.localeCompare(a.target));
+      } else if (sortVal === 'amount-desc') {
+        filteredData.sort((a, b) => b.nominalVal - a.nominalVal);
+      } else if (sortVal === 'amount-asc') {
+        filteredData.sort((a, b) => a.nominalVal - b.nominalVal);
+      }
+
+      currentPage = 1;
+      renderTable();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('table-body');
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+      const paginatedItems = filteredData.slice(start, end);
+
+      if (paginatedItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="12" class="loading-state">Tidak ada data yang ditemukan.</td></tr>`;
+        document.getElementById('pagination-info').innerText = `0 dari ${filteredData.length} data`;
+        renderPaginationControls();
+        return;
+      }
+
+      let html = '';
+      paginatedItems.forEach((item, idx) => {
+        let isChecked = selectedTargets.has(item.rowIndex) ? 'checked' : '';
+        html += `
+          <tr>
+            <td style="text-align: center;">
+              <input type="checkbox" class="row-checkbox" value="${item.rowIndex}" ${isChecked} onclick="toggleRowSelection(this, ${item.rowIndex})">
+            </td>
+            <td>${start + idx + 1}</td>
+            <td><b>${item.agent}</b></td>
+            <td>${item.caseNo}</td>
+            <td><b>${item.target}</b></td>
+            <td><a href="https://wa.me/${item.nomor}" target="_blank" class="phone-link"><i class="fa-brands fa-whatsapp"></i> ${item.nomor}</a></td>
+            <td><b>${formatRupiah(item.nominalVal)}</b></td>
+            <td>${item.email}</td>
+            <td title="${item.alamat}">${item.alamat.length > 25 ? item.alamat.substring(0, 25) + '...' : item.alamat}</td>
+            <td>${item.nik}</td>
+            <td>${item.provinsi}</td>
+            <td>
+              <button class="btn-detail" onclick="openDetailModal(${item.rowIndex})">
+                <i class="fa-solid fa-eye"></i> Detail
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+      document.getElementById('pagination-info').innerText = `Menampilkan ${start + 1} - ${Math.min(end, filteredData.length)} dari ${filteredData.length} data`;
+      renderPaginationControls();
+      updateDeleteButtonState();
+      
+      const selectAllCheckbox = document.getElementById('select-all');
+      const pageRowIndices = paginatedItems.map(i => i.rowIndex);
+      selectAllCheckbox.checked = pageRowIndices.length > 0 && pageRowIndices.every(id => selectedTargets.has(id));
+    }
+
+    function renderPaginationControls() {
+      const totalPages = Math.ceil(filteredData.length / pageSize) || 1;
+      document.getElementById('btn-prev').disabled = currentPage === 1;
+      document.getElementById('btn-next').disabled = currentPage >= totalPages;
+    }
+
+    function nextPage() {
+      const totalPages = Math.ceil(filteredData.length / pageSize);
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderTable();
+      }
+    }
+
+    function prevPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTable();
+      }
+    }
+
+    function changeRowsPerPage() {
+      pageSize = parseInt(document.getElementById('rows-per-page').value);
+      currentPage = 1;
+      renderTable();
+    }
+
+    function toggleSelectAll(master) {
+      const checkboxes = document.querySelectorAll('.row-checkbox');
+      checkboxes.forEach(cb => {
+        cb.checked = master.checked;
+        let rowIdx = parseInt(cb.value);
+        if (master.checked) {
+          selectedTargets.add(rowIdx);
+        } else {
+          selectedTargets.delete(rowIdx);
+        }
+      });
+      updateDeleteButtonState();
+    }
+
+    function toggleRowSelection(cb, rowIdx) {
+      if (cb.checked) {
+        selectedTargets.add(rowIdx);
+      } else {
+        selectedTargets.delete(rowIdx);
+      }
+      updateDeleteButtonState();
+    }
+
+    function updateDeleteButtonState() {
+      const btn = document.getElementById('btn-delete-selected');
+      const countSpan = document.getElementById('selected-count');
+      countSpan.innerText = selectedTargets.size;
+      btn.disabled = selectedTargets.size === 0;
+    }
+
+    function openDetailModal(rowIndex) {
+      const item = rawData.find(d => d.rowIndex === rowIndex);
+      if (!item) return;
+
+      let body = `
+        <div class="detail-group"><label>Agent</label><div>${item.agent}</div></div>
+        <div class="detail-group"><label>Case No</label><div>${item.caseNo}</div></div>
+        <div class="detail-group"><label>Target (Nasabah)</label><div><b>${item.target}</b></div></div>
+        <div class="detail-group"><label>Nomor HP</label><div><a href="https://wa.me/${item.nomor}" target="_blank" class="phone-link">${item.nomor}</a></div></div>
+        <div class="detail-group"><label>Nominal</label><div><b>${formatRupiah(item.nominalVal)}</b></div></div>
+        <hr style="border: 0; border-top: 1px solid #262626; margin: 14px 0;">
+        <div class="detail-group"><label>Email</label><div>${item.email}</div></div>
+        <div class="detail-group"><label>Alamat</label><div>${item.alamat}</div></div>
+        <div class="detail-group"><label>Nama EC 1</label><div>${item.namaEc1}</div></div>
+        <div class="detail-group"><label>Nomor EC 1</label><div>${item.nomorEc1}</div></div>
+        <div class="detail-group"><label>Nama EC 2</label><div>${item.namaEc2}</div></div>
+        <div class="detail-group"><label>Nomor EC 2</label><div>${item.nomorEc2}</div></div>
+        <div class="detail-group"><label>NIK</label><div>${item.nik}</div></div>
+        <div class="detail-group"><label>Provinsi</label><div>${item.provinsi}</div></div>
+        
+        <div class="photo-grid-modal">
+          <div class="photo-box">
+            <label>Detail Live</label>
+            ${item.livePhoto ? `<img src="${item.livePhoto}" class="modal-thumb" onclick="openImageModal('${item.livePhoto}')" alt="Detail Live">` : '<div style="font-size:11px; color:#666;">Tidak ada foto</div>'}
+          </div>
+          <div class="photo-box">
+            <label>Photo Detail ID Card</label>
+            ${item.idCardPhoto ? `<img src="${item.idCardPhoto}" class="modal-thumb" onclick="openImageModal('${item.idCardPhoto}')" alt="Photo Detail ID Card">` : '<div style="font-size:11px; color:#666;">Tidak ada foto</div>'}
+          </div>
+        </div>
+      `;
+
+      document.getElementById('detailContentBody').innerHTML = body;
+      document.getElementById('detailModal').style.display = 'flex';
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detailModal').style.display = 'none';
+    }
+
+    function openImageModal(url) {
+      document.getElementById('modalImage').src = url;
+      document.getElementById('imageModal').style.display = 'flex';
+    }
+
+    function closeImageModal() {
+      document.getElementById('imageModal').style.display = 'none';
+    }
+
+    function deleteSelectedRows() {
+      if (selectedTargets.size === 0) return;
+      if (!confirm(`Yakin ingin menghapus ${selectedTargets.size} data terpilih secara permanen dari Spreadsheet?`)) return;
+
+      const rowsArray = Array.from(selectedTargets);
+      
+      google.script.run
+        .withSuccessHandler(function(response) {
+          alert('Data berhasil dihapus.');
+          selectedTargets.clear();
+          fetchData();
+        })
+        .withFailureHandler(function(error) {
+          alert('Gagal menghapus data: ' + error.message);
+        })
+        .deleteRows(rowsArray);
+    }
+
+    window.onload = fetchData;
+  </script>
+</body>
+</html>
